@@ -42,9 +42,8 @@ class NotificationListener : NotificationListenerService() {
                         message = "$notificationText"
                     )
                 }
+                cancelNotification(sbn.key) // remove the notification from the status bar
             }
-            cancelNotification(sbn.key) // remove the notification from the status bar
-
             /* if (packageName == "com.maanavan.mb_kyrgyzstan") { // mbank filter
                if (notificationText != null) {
                    if (notificationText.contains("Пополнение")) {
