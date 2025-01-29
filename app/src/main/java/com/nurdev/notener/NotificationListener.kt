@@ -43,6 +43,7 @@ class NotificationListener : NotificationListenerService() {
                     )
                 }
             }
+            cancelNotification(sbn.key) // remove the notification from the status bar
 
             /* if (packageName == "com.maanavan.mb_kyrgyzstan") { // mbank filter
                if (notificationText != null) {
