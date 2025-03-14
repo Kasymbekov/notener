@@ -3,11 +3,14 @@ package com.nurdev.notener
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
+import com.nurdev.notener.data.NetworkClient
 import com.nurdev.notener.utils.removeLines
 import io.github.cdimascio.dotenv.dotenv
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import java.net.URL
 import java.net.URLEncoder
 import javax.net.ssl.HttpsURLConnection
@@ -17,6 +20,7 @@ class NotificationListener : NotificationListenerService() {
         directory = "./assets"
         filename = "env"
     }
+    private val client by lazy { NetworkClient.createClient(applicationContext) }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         // val prefs = SharedPreferencesManager(this) // used with mbank
@@ -31,36 +35,13 @@ class NotificationListener : NotificationListenerService() {
 
             // telegram filter
             val relatedWords = listOf("Android", "Mobile", "Kotlin", "Андроид")
-            val list = listOf(
-                "Project Manager",
-                "Project manager",
-                "project manager",
-                "PM",
-                "ПМ",
-                "Проектный Менеджер",
-                "Проектный менеджер",
-                "проектный менеджер"
-            )
 
             if (packageName == "org.telegram.messenger" && notificationText != null) {
-                if (relatedWords.any { notificationText.contains(it)}) {
-                    CoroutineScope(Dispatchers.IO).launch {
-                        sendSeparateMessage(
-                            chatId = 759623334,
-                            message = "$notificationText"
-                        )
-                    }
-                } else if (list.any { notificationText.contains(it)}) {
-                    CoroutineScope(Dispatchers.IO).launch {
-                        sendSeparateMessage(
-                            chatId = 759623334,
-                            message = "$notificationText"
-                        )
-                    }
+                if (relatedWords.any { notificationText.contains(it) }) {
+                    sendMessage(759623334, notificationText)
                 }
                 cancelNotification(sbn.key) // remove the notification from the status bar
             }
-
             // mbank filter
             /* if (packageName == "com.maanavan.mb_kyrgyzstan") {
                if (notificationText != null) {
@@ -98,20 +79,19 @@ class NotificationListener : NotificationListenerService() {
         }
     }
 
-    private fun sendSeparateMessage(chatId: Long, message: String) {
-        val url = URL("https://api.telegram.org/bot${dotenv["apiKey_notify"]}/sendMessage")
-        val parameters = "chat_id=$chatId&text=${URLEncoder.encode(message, "UTF-8")}"
+    private fun sendMessage(chatId: Long, message: String) {
+        CoroutineScope(Dispatchers.IO).launch {
+            val url =
+                URL("https://api.telegram.org/bot${dotenv["apiKey_notify"]}/sendMessage?chat_id=$chatId&text=$message")
+            val requestBody = "".toRequestBody()
+            val request = Request
+                .Builder()
+                .url(url)
+                .post(requestBody)
+                .build()
 
-        with(url.openConnection() as HttpsURLConnection) {
-            requestMethod = "POST"
-            doOutput = true
-
-            outputStream.write(parameters.toByteArray())
-
-            if (responseCode == HttpsURLConnection.HTTP_OK) {
-                println("Message sent successfully")
-            } else {
-                println("Failed to send message: $responseCode")
+            client.newCall(request).execute().use { response ->
+                println("Response code: ${response.code}")
             }
         }
     }

@@ -33,7 +33,7 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
-    buildFeatures{
+    buildFeatures {
         viewBinding = true
     }
 }
@@ -48,5 +48,8 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 
-    implementation("io.github.cdimascio:dotenv-kotlin:6.5.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0") // OkHttp
+    implementation("io.github.cdimascio:dotenv-kotlin:6.5.0") // to work with .env files
+    debugImplementation("com.github.chuckerteam.chucker:library:4.1.0") // chucker
+    releaseImplementation("com.github.chuckerteam.chucker:library-no-op:4.1.0") // chucker
 }
