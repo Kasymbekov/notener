@@ -19,7 +19,7 @@ class NotificationListener : NotificationListenerService() {
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
-        val prefs = SharedPreferencesManager(this)
+        // val prefs = SharedPreferencesManager(this) // used with mbank
         sbn?.let {
             val packageName = sbn.packageName
             val notificationTitle = sbn.notification.extras.getString("android.title")
@@ -29,22 +29,40 @@ class NotificationListener : NotificationListenerService() {
             Log.d("nurs", "Title: $notificationTitle")
             Log.d("nurs", "Text: $notificationText")
 
-            // telegram filter (for testing)
+            // telegram filter
             val relatedWords = listOf("Android", "Mobile", "Kotlin", "Андроид")
-            if (packageName == "org.telegram.messenger" && notificationText != null && relatedWords.any {
-                    notificationText.contains(
-                        it
-                    )
-                }) {
-                CoroutineScope(Dispatchers.IO).launch {
-                    sendSeparateMessage(
-                        chatId = 759623334,
-                        message = "$notificationText"
-                    )
+            val list = listOf(
+                "Project Manager",
+                "Project manager",
+                "project manager",
+                "PM",
+                "ПМ",
+                "Проектный Менеджер",
+                "Проектный менеджер",
+                "проектный менеджер"
+            )
+
+            if (packageName == "org.telegram.messenger" && notificationText != null) {
+                if (relatedWords.any { notificationText.contains(it)}) {
+                    CoroutineScope(Dispatchers.IO).launch {
+                        sendSeparateMessage(
+                            chatId = 759623334,
+                            message = "$notificationText"
+                        )
+                    }
+                } else if (list.any { notificationText.contains(it)}) {
+                    CoroutineScope(Dispatchers.IO).launch {
+                        sendSeparateMessage(
+                            chatId = 759623334,
+                            message = "$notificationText"
+                        )
+                    }
                 }
                 cancelNotification(sbn.key) // remove the notification from the status bar
             }
-            /* if (packageName == "com.maanavan.mb_kyrgyzstan") { // mbank filter
+
+            // mbank filter
+            /* if (packageName == "com.maanavan.mb_kyrgyzstan") {
                if (notificationText != null) {
                    if (notificationText.contains("Пополнение")) {
                        Log.e(
@@ -96,10 +114,5 @@ class NotificationListener : NotificationListenerService() {
                 println("Failed to send message: $responseCode")
             }
         }
-    }
-
-    override fun onCreate() {
-        super.onCreate()
-        Log.d("nurs", "NotificationListenerService created")
     }
 }
